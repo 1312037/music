@@ -1,0 +1,319 @@
+Author:Nguyễn Thanh Tuấn - 1412607
+Môn: Kiến trúc phần mềm
+Giảng viên: Trần Minh Triết
+	
+	Mẫu singleton: để khống chế việc tạo lập ( ví dụ: chỉ cho phép xuất 30 hóa đơn 1 ngày hoặc không cho phép xuất hóa
+					đơn sau 5h chiều
+	 + chỉ có 1 instance của class
+	  => cấm tạo nhiều hơn 1 instance
+	  ==> Chặn contructor  và có phương thức static để tra về instance duy nhất
+	  Example:
+		Class Pyramid
+		{
+			static protected int n=0;
+			static protected int nMax=1;
+			public static Pyramid BuildPyramid()
+			{
+				if(CanBuildPyramid()) //(n<nMax)
+					{
+						n++;
+						return new Pyramid();
+					}
+					return null;
+			}
+			protected Pyramid()
+			{
+				//implements
+			}
+		}
+		- Abtract Factory
+		Nhóm thứ 2: Behavior Pattern
+			- Sort theo yêu cầu
+		Mẫu Template Method
+		Bài toán: 
+			1) Sắp mang a gồm N phần tử
+				a) mảng a gồm các số nguyên tăng dần
+				b) mảng a gồm các số nguyên giảm dần
+				c) mảng a gồm các số nguyên tăng dần theo trị tuyệt đối
+				d) mảng a gồm các số nguyên tăng dần theo quy luật
+					- số chẵn nếu có , ở đầu của mảng và tăng dần
+					- số lẻ ( nếu có ), ở cuối mảng và giảm dần
+					- số chẵn trước, số lẻ sau
+				e) mảng A gồm các số nguyên , sắp theo quy luật
+					- số chẵn (nếu có) tăng dần
+					- số lẻ giảm dần
+					- tính chất chẵn lẻ tại mỗi vị trí không đổi sau khi sắp
+					
+			Implements:
+	void sortA(int [] A, int N)
+		{
+			for(int i=0;i<N-1;i++)
+				for(int j=i+1;j<N;j++)
+					if(..............)
+						swap(A[i],A[j]);
+		}
+			Tư tưởng làm yêu cầu trên:
+			Tìm chỗ cần thay đổi, tạo a placeholder để điền vào sau.
+			Phương án 1: placeholder sẽ chưa hàm mới nhờ overrride phương thức.
+			Cài đặt:
+	class AbtractSorter
+		{
+			protected virtual bool NeedToSwap(int v1,int v2)
+				{
+					return false;
+				}	
+			public void Sort(int []A,int N)
+				{
+					for(int i=0;i<N-1;i++)
+						for(int j=i+1;j<N;j++)
+							if(NeedToSwap(A[i],A[j])
+								swap(A[i],A[j]);
+				}
+		}
+		
+		//
+		class SortD : AbtractSorter
+		{
+			protected overrride bool NeedToSwap(int v1, int v2)
+			{
+				if((v1%2 ==0 ) && (v2%2 ==0)  && (v1> v2)) return true;
+				
+				if((v1%2 ==1 ) && (v2%2 ==1)  && (v1< v2)) return true;
+				
+				if((v1%2 ==1 ) && (v2%2 ==0)) return true;
+			}
+		}
+		
+		//sap xep mang a gom n sinh vien theo 
+		
+		Dùng Object:
+		Cài đặt:
+	class AbtractSorter
+		{
+			protected virtual bool NeedToSwap(Object v1,Object v2)
+				{
+					return false;
+				}	
+			public void Sort(Object []A,int N)
+				{
+					for(int i=0;i<N-1;i++)
+						for(int j=i+1;j<N;j++)
+							if(NeedToSwap(A[i],A[j])
+								swap(A[i],A[j]);
+				}
+		}
+	class SortD : AbtractSorter
+		{
+			protected overrride bool NeedToSwap(int v1, int v2)
+			{
+				int x1=(int)v1;
+				int x2= (int )v2;
+				if((x1%2 ==0 ) && (x2%2 ==0)  && (x1> x2)) return true;
+				
+				if((x1%2 ==1 ) && (x2%2 ==1)  && (x1< x2)) return true;
+				
+				if((x1%2 ==1 ) && (x2%2 ==0)) return true;
+			}
+		}	
+	---------------------------------------------------------------------
+		C++ ...
+		đưa 1 mảng gồm N phần tử , mỗi phần tử kiểu void* thì làm như thế nào?
+		nếu khởi gán như thế này thì những phần tử ko được khởi gán là bằng 0
+		//int A[10]= {0,1,2};
+		int A[10]= {0,1,2};
+		void* B[10];
+		for(int i=0;i<10;i++)
+			B[i]= (void*)A[i]; // cách 1
+			B[i]= (void*) A+i; // cách 2
+		
+			void Sort(void* A,int N , int sz) //sz: là kích thước 1 phần tử là bao nhiều byte? ( int =4byte)
+				{
+					for(int i=0;i<N-1;i++)
+						for(int j=i+1;j<N;j++)
+							if(NeedToSwap(GetElement(A,N,i,sz), GetElement(A,N,j,sz))
+								swap(A,N,i,j,sz);
+				}
+			int mode=0;
+			//khai báo con trỏ hàm
+			typedef bool (*HELPER)(void*, void*);
+			HELPER NeedToSwapHelper[2]= {NeedToSwapA, NeedToSwapB}; 
+			bool NeedToSwap(void* p1, void* p2)
+				{
+				// cách 2 : dùng con trỏ hàm khúc này
+				return NeedToSwapHelper[mode](p1,p2);
+				//cách 1: Adapter Pattern khúc này	
+					//if(mode ==0)
+						//NeedToSwapA(p1,p2);
+					//else if(mode ==1)
+						//NeedToSwapB(p1,p2);
+					//return false;
+				}
+			void * GetElement( void *A, int N, int i,int sz)
+				{
+					return (void*) (((char*)A) + i*sz);
+				}
+			bool NeedToSwapA ( void* p1, void* p2) // de chạy câu a)
+				{
+					int v1= *((int*)p1); // chuyển void * thành int * rồi lấy giá trị của nó
+					int v2= *((int*)p2);
+					return v1>v2;
+				}
+			bool NeedToSwapB ( void* p1, void* p2) // de chạy câu a)
+				{
+					int v1= *((int*)p1); // chuyển void * thành int * rồi lấy giá trị của nó
+					int v2= *((int*)p2);
+					return v1<v2;
+				}
+			
+			Mẫu Adapter dùng để chuyển hướng ,trên yêu cầu mà bên dưới đã có sẵn, tùy chỉnh trưởng hợp mà chạy chương trình
+			cho đúng 
+		
+			Cài đặt struct PhanSo có hàm so sánh
+			typedef bool (*MYFUNC)(PHANSO ps);
+			Struct
+			{
+				int tuso;
+				int mauso;
+				MYFUNC IsEqual;
+				// bool IsEqual(PHANSO ps2);
+			} PHANSO;
+			PHANSO ps1;
+			ps1.IsEqual(ps2);
+			
+			Xử lí đa kế thừa trong C:
+			class A
+			{
+				public: int x;
+				private: int y;
+			}
+			class B
+			{
+				public :float x;
+			}
+			Class C:pubic A,B
+			{
+			}
+			void main()
+			{
+				C p;
+				((A*)(&p))->x; //x này là int
+				((B*)*&p))->x; // x này là float
+			}
+			Khi kế thừa từ lớp cha thì lớp C sẽ lưu trữ các thuộc tính của A rồi đến B và thuộc tính riêng của nó sau cùng
+			Như vậy nó cũng có các thuộc tính private của A .
+			
+			
+			
+			Mẫu Helper(template method, strategy,  , sẽ được lập trình trong VS2015 C# dưới đây
+			Bài tập về nha ( bài 2): ( dùng mẫu template method và strategy)
+				Nộp vào sáng thứ 7 ( Viết tay)
+				Cho mảng A gồm N phần tử
+				a) trả về chỉ số của số nguyên dương lớn nhất đầu tiên trong mảng
+					Trả về -1 nếu không tìm được
+				b) trả về chỉ số của số nguyên âm nhỏ nhất cuối cùng trong mảng
+					Trả về -1 nếu không tìm được
+				c) làm được thì làm ( ko ép)
+					trả về chỉ số của phân số không âm nhỏ nhất cuối cùng trong mảng
+					Trả về -1 nếu không tìm được
+					
+				C# ................
+				
+				# template method 
+				virtual G();
+				F()
+				{
+					G();
+				}
+				#strategy
+				F()
+				{
+					HelperG.help();
+				}
+				class Sorter
+				{
+				Helper myHelper= new HelperA();
+					void Sort(int []A, int N)
+					{
+					for(int i=0;i<N-1;i++)
+						for(int j=i+1;j<N;j++)
+							if(myHelper.NeedToSwap(A[i],A[j])
+								swap(A[i],A[j]);
+					}
+	
+				}
+				class Helper
+				{
+					public virtual NeedToSwap(int v1, int v2)
+					{
+						return false;
+					}
+				}
+				class HelperA: Helper
+				{
+					public overrride NeedToSwap(int v1,int v2)
+					{
+						return v1>v2;
+					}
+				}
+				
+				-------------------------- Mẫu State----------------------
+				Khi nào muốn đổi kiểu dữ liệu của Object ta dùng mẫu State
+				State:
+				 Polymorphism ==> Metamorphism
+				  Ví dụ cho cài đặt
+				Class Hero
+				{
+					private float BasicDMG =100;
+					private float BasicSpeed =10;
+					private float HP =100;
+					//template method chỗ này
+					PhysicalState[] states= {new HealthyState(),new InjuredState(),BresekState};
+					PhysicalState CurrentState
+					{
+						get
+						{
+							if(HP>70) return states[0];
+							else if(HP>30) return states[1];
+							return states[2];
+						}
+							
+					};
+					
+					public float getDamage()
+					{
+						return BasicDMG * CurrentState.GetDamageFactor();
+					}
+					public float getSpeed()
+					{
+						return BasicSpeed * CurrentState.GetSpeedFactor();
+					}
+					
+					public Hero()
+					{
+						
+					}
+				}
+				Class PhysicalState
+				{
+					public virtual float GetDamageFactor()
+					{
+						return 1.0f;
+					}
+					public virtual float GetSpeedFactor()
+					{
+						return 9;
+					}
+				}
+				Class HealthyState
+				Class InjuredState : PhysicalState
+				{
+					pubic overrride float GetDamageFactor()
+					{
+						return 1.2f;
+					}
+				Class BresekState
+				{
+					
+				}
+				
+		
